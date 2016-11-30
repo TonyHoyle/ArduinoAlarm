@@ -7,7 +7,7 @@ class NtpDriver
     EthernetUDP _udp;
     IPAddress _address;
     int _responseTimeout;
-    int _lastPacketTime;
+    unsigned int _lastPacketTime;
 
     void sendNtpPacket(IPAddress address); 
     void receiveNtpPacket();

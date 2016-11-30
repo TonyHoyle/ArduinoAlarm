@@ -1,6 +1,7 @@
 #include "Arduino.h"
-#include <avr/pgmspace.h>
 #include "melody.h"
+
+MelodyClass Melody;
 
 #define DEBUG 0
 
@@ -8,21 +9,31 @@ static const int noteGap = 50;
 
 /* Control tone() to generate a melody.  Passed an array of note, duration terminated by 0,0 */
 
-Melody::Melody(int pin)
+void MelodyClass::begin(int pin)
 {
   _pin = pin;
+  _nextTone = NULL;
 }
 
-void Melody::play(const uint16_t *tones)
+void MelodyClass::play(const uint16_t *tones, bool loop)
 {
+  /* If a note is playing, let it complete first, which sounds better */
+  if(_nextTone == NULL) _nextInterval = 0; /* Start on next call to loop() - this may not be immediate */
   _nextTone = tones;
-  _nextInterval = 0; /* Start on next call to loop() - this may not be immediate */
   _gap = false;
+  if(loop) _loopPoint = tones;
+  else _loopPoint = NULL;
 }
 
-void Melody::maintain()
+void MelodyClass::stop()
 {
-  int mil = millis();
+  _loopPoint = NULL;
+  _nextTone = NULL;
+}
+
+void MelodyClass::maintain()
+{
+  unsigned int mil = millis();
   if(_nextTone == NULL || mil < _nextInterval) return;
 
   /* Special case for startup */
@@ -50,7 +61,7 @@ void Melody::maintain()
     _gap = false;
 
     if(duration == 0) /* end */
-      _nextTone = NULL;    
+      _nextTone = _loopPoint;    
   }
 }
 

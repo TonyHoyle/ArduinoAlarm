@@ -2,15 +2,14 @@
 #include <Ethernet.h>
 #include <Time.h>
 #include "sensors.h"
+#include "menu.h"
+#include "bell.h"
 #include "serialmenu.h"
 
 SerialMenuClass SerialMenu;
 
 void SerialMenuClass::begin()
 {
-  _alarm = false;
-  _strobe = false;
-  
   showMenu();
 }
 
@@ -18,12 +17,19 @@ void SerialMenuClass::maintain()
 {
   if(Serial.available())
   {
-    switch(Serial.read())
+    String line = Serial.readStringUntil('\n');
+    switch(line[0])
     {
       case '\xd': showMenu(); break;
       case '1': toggleStrobe(); break;
       case '2': toggleAlarm(); break;
+      case '3': toggleTestMode(); break;
+      case '4': toggleArmed(); break;
+      case 'p': setPin(line.c_str()+1); break;
     }
+    // Sink any remaining characters just in case
+    while(Serial.available()) 
+      Serial.read();
   }
 }
 
@@ -42,11 +48,21 @@ void SerialMenuClass::showMenu()
   Serial.print(Sensors.sensor()|512, BIN);
   Serial.print(F(" "));
   Serial.println(Sensors.tamper()|512, BIN);
+  Serial.print(F("Pin: "));
+  Serial.write(Menu.getPin(), Menu.getPinLength());
   Serial.println(F(""));
-  Serial.println(_strobe?F("1: Disable strobe"):F("1: Enable strobe"));
-  Serial.println(_alarm?F("2: Disable alarm"):F("2: Enable alarm"));
   Serial.println(F(""));
-  Serial.println(F("Select: "));
+  Serial.println(Bell.strobe()?F("1: Disable strobe"):F("1: Enable strobe"));
+  Serial.println(Bell.bell()?F("2: Disable alarm"):F("2: Enable alarm"));
+  Serial.println(Bell.testMode()?F("3: Disable test mode"):F("3: Enable test mode"));
+  Serial.println(Bell.armed()?F("4: Disarm system"):F("4: Arm system"));
+  Serial.println(F("p<pin> Set pin"));
+  Serial.println(F(""));
+  if(Bell.testMode())
+    Serial.println(F("*** TEST MODE ENABLED ***"));
+  if(Bell.armed())
+    Serial.println(F("*** SYSTEM IS ARMED ***"));
+  Serial.print(F("Menu: "));
 }
 
 int SerialMenuClass::freeRam () 
@@ -68,13 +84,31 @@ const char *SerialMenuClass::getTime()
 
 void SerialMenuClass::toggleStrobe()
 {
-  _strobe = !_strobe;
-  Sensors.strobe(_strobe);
+  Bell.setStrobe(!Bell.strobe());
 }
 
 void SerialMenuClass::toggleAlarm()
 {
-  _alarm = !_alarm;
-  Sensors.bell(_alarm);
+  Bell.setBell(!Bell.bell());
+}
+
+void SerialMenuClass::toggleTestMode()
+{
+  Bell.setTestMode(!Bell.testMode());
+}
+
+void SerialMenuClass::toggleArmed()
+{
+  Bell.setArmed(!Bell.armed());
+}
+
+void SerialMenuClass::setPin(const char *pin)
+{
+  if(*pin > 0) 
+  {
+    Menu.setPin(pin); 
+    Serial.print(F("Pin reset to "));
+    Serial.println(pin); 
+  }
 }
 

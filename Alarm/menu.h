@@ -3,11 +3,11 @@
 
 #define MAX_PIN_LENGTH 12
 
-class Menu;
+class MenuClass;
 
-struct menu_t { char key; const char *prompt; void(Menu::*function)(char key); };
+struct menu_t { char key; const char *prompt; void(MenuClass::*function)(char key); };
 
-class Menu
+class MenuClass
 {
   private:
     struct eepromData_t
@@ -21,7 +21,6 @@ class Menu
     int _currentMenu;
     char _enteredPin[MAX_PIN_LENGTH];
     int _keyCount;
-    bool _dayMode;
     static const menu_t _menu[];
     int _lastMinute;
     
@@ -34,12 +33,17 @@ class Menu
     void networkMenu(char key);
 
   public:
-    Menu();
+    void begin();
+    void maintain();
 
     void keyHandler(char key);
-    void init();
-    void maintain();
     void update();
+
+    void setPin(const char *pin);
+    const char *getPin();
+    byte getPinLength();
 };
+
+extern MenuClass Menu;
 
 #endif

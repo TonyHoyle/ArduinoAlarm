@@ -31,7 +31,8 @@ void SensorDriver::begin()
 
 void SensorDriver::maintain()
 {
-  _sensor |= digitalRead(SENSOR0) | (digitalRead(SENSOR1)<<1) | (digitalRead(SENSOR2)<<2) | (digitalRead(SENSOR3)<<3);
+  _liveSensor = digitalRead(SENSOR0) | (digitalRead(SENSOR1)<<1) | (digitalRead(SENSOR2)<<2) | (digitalRead(SENSOR3)<<3);
+  _sensor |= _liveSensor;
   _tamper |= digitalRead(SENSOR_TAMPER) | (digitalRead(KEYPAD_TAMPER)<<1) | (digitalRead(BELL_TAMPER)<<2);
 
   // if any bit has gone to zero, it means it's active so reset its bit in the mask

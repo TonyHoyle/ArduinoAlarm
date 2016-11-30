@@ -3,39 +3,40 @@
 #include <EEPROM.h>
 
 #include "Arduino.h"
-#include "menu.h"
 #include "keypad.h"
 #include "tunelib.h"
+#include "melody.h"
+#include "bell.h"
+#include "menu.h"
 
 #define PINMODE -1
 #define MENUMODE -2
 
-const menu_t Menu::_menu[] =
+MenuClass Menu;
+
+const menu_t MenuClass::_menu[] =
 {
-  { '1', "Tunes", &Menu::tunesMenu },
-  { '2', "Network", &Menu::networkMenu },
+  { '1', "Tunes", &MenuClass::tunesMenu },
+  { '2', "Network", &MenuClass::networkMenu },
   { 0 }
 };
 
-Menu::Menu()
+
+void MenuClass::begin()
 {
   _currentMenu = PINMODE;
   EEPROM.get(0, _data);
   if(_data.size != sizeof(_data) || _data.version != 1)
-  {
-    _data.pinLength = 4;
-    memcpy(_data.pin, "1111", _data.pinLength);
-    _data.size = sizeof(_data);
-    _data.version = 1;
-    EEPROM.put(0, _data);
-  }
+    setPin("1111");
+
   _keyCount = 0;
-  _dayMode = true;
   _lastMinute = -1;
 }
 
-void Menu::keyHandler(char key)
+void MenuClass::keyHandler(char key)
 {
+  if(Bell.armed()) _currentMenu = PINMODE;
+  
   if (_currentMenu == PINMODE) pinKey(key);
   else if (_currentMenu == MENUMODE) menuKey(key);
   else
@@ -51,7 +52,7 @@ void Menu::keyHandler(char key)
   }
 }
 
-void Menu::pinKey(char key)
+void MenuClass::pinKey(char key)
 {
   if (key == '=')
   {
@@ -69,21 +70,13 @@ void Menu::pinKey(char key)
     _keyCount = 0;
     if (!memcmp(_data.pin, _enteredPin, _data.pinLength))
     {
-      _dayMode = !_dayMode;
+      Bell.pinEntered();
       updateMessage();
-      if (!_dayMode)
-      {
-        // Perform exit, etc.
-      }
-      else
-      {
-        // Entered day mode
-      }
     }
   }
 }
 
-void Menu::menuKey(char key)
+void MenuClass::menuKey(char key)
 {
   if (key == '?')
   {
@@ -103,21 +96,20 @@ void Menu::menuKey(char key)
   }
 }
 
-void Menu::updateMessage()
+void MenuClass::updateMessage()
 {
   Keypad.clear();
-  if (_currentMenu == PINMODE)
-  {
-    if (!_dayMode) Keypad.message("Alarm Set");
-    else Keypad.message(getTime());
-  }
+  if(Bell.armed())
+    Keypad.message("Alarm Set");
+  else if (_currentMenu == PINMODE)
+    Keypad.message(getTime());
   else if (_currentMenu == MENUMODE)
     Keypad.message("Menu Mode");
   else
     Keypad.message(_menu[_currentMenu].prompt);
 }
 
-const char *Menu::getTime()
+const char *MenuClass::getTime()
 {
   static char s_time[64];
   static char s_day[4];
@@ -127,16 +119,16 @@ const char *Menu::getTime()
   return s_time;
 }
 
-void Menu::tunesMenu(char key)
+void MenuClass::tunesMenu(char key)
 {
   switch (key)
   {
-    case '1': Keypad.beep(Tunes.mario); break;
-    case '2': Keypad.beep(Tunes.bbc_start); break;
+    case '1': Melody.play(Tunes.mario, false); break;
+    case '2': Melody.play(Tunes.bbc_start, false); break;
   }
 }
 
-void Menu::networkMenu(char key)
+void MenuClass::networkMenu(char key)
 {
   IPAddress localIP;
   char ip[17];
@@ -151,7 +143,7 @@ void Menu::networkMenu(char key)
   }
 }
 
-void Menu::maintain()
+void MenuClass::maintain()
 {
   int min = minute();
   if(min != _lastMinute)
@@ -159,9 +151,29 @@ void Menu::maintain()
   _lastMinute = min;
 }
 
-void Menu::update()
+void MenuClass::update()
 {
   updateMessage();
+}
+
+void MenuClass::setPin(const char *pin)
+{
+  _data.pinLength = min(MAX_PIN_LENGTH, strlen(pin));
+  memcpy(_data.pin, pin, _data.pinLength);
+  
+  _data.size = sizeof(_data);
+  _data.version = 1;
+  EEPROM.put(0, _data);
+}
+
+const char *MenuClass::getPin()
+{
+  return _data.pin;
+}
+
+byte MenuClass::getPinLength()
+{
+  return _data.pinLength;
 }
 
 

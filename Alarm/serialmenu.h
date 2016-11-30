@@ -4,14 +4,14 @@
 class SerialMenuClass
 {
   private:
-    bool _alarm;
-    bool _strobe;
-    
     int freeRam();
     const char *getTime();
 
     void toggleStrobe();
     void toggleAlarm();
+    void toggleTestMode();
+    void toggleArmed();
+    void setPin(const char *pin);
 
   public:
     void begin();

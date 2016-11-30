@@ -1,32 +1,23 @@
 #include "Arduino.h"
-#include "keypad.h"
 #include "pins.h"
+#include "menu.h"
+#include "keypad.h"
 
 #define DEBUG 0
 
-KeypadDriver Keypad;
+KeypadClass Keypad;
 
-KeypadDriver::KeypadDriver() : _melody(KEYPAD_BEEP)
-{
-  KeyHandler = NULL;
-}
-
-void KeypadDriver::init()
+void KeypadClass::begin()
 {
   Serial1.begin(1200, SERIAL_9N1);
 }
 
-void KeypadDriver::clear()
+void KeypadClass::clear()
 {
   message("\xc");
 }
 
-void KeypadDriver::beep(const uint16_t *notes)
-{
-  _melody.play(notes);
-}
-
-void KeypadDriver::message(const char *msg)
+void KeypadClass::message(const char *msg)
 {
   int len = strlen(msg);
   int l[2] = { 1, len };
@@ -40,7 +31,7 @@ void KeypadDriver::message(const char *msg)
   send_message('L', 2, l, m);
 }
 
-void KeypadDriver::led(int zones, int leds)
+void KeypadClass::led(int zones, int leds)
 {
   const unsigned char msg[] = { (unsigned char)zones, (unsigned char)leds };
   int l[1] = { 2 };
@@ -49,7 +40,7 @@ void KeypadDriver::led(int zones, int leds)
   send_message('P', 1, l, m);
 }
 
-void KeypadDriver::send_message(int code, int count, const int *len, const void **msg)
+void KeypadClass::send_message(int code, int count, const int *len, const void **msg)
 {
   Serial1.write(code + 256);
   int chk = code;
@@ -64,12 +55,9 @@ void KeypadDriver::send_message(int code, int count, const int *len, const void 
   Serial1.write(chk & 255);
 }
 
-void KeypadDriver::maintain()
+void KeypadClass::maintain()
 {
   int byte;
-
-  _melody.maintain();
-  _menu.maintain();
 
   if (!Serial1.available())
     return;
@@ -100,14 +88,14 @@ void KeypadDriver::maintain()
 }
 
 
-void KeypadDriver::incoming_key()
+void KeypadClass::incoming_key()
 {
   while (!Serial1.available()) ;
   int key = Serial1.read();
   while (!Serial1.available()) ;
-  int chk = Serial1.read();
 
 #if DEBUG
+  int chk = Serial1.read();
   Serial.print("Key: ");
   Serial.write(key);
   if (chk != ('K' + key) & 255)
@@ -118,11 +106,13 @@ void KeypadDriver::incoming_key()
     Serial.print(('K' + key) & 255);
   }
   Serial.println("");
+#else
+  Serial1.read();
 #endif
 
   tone(KEYPAD_BEEP, 1046, 100);
 
-  _menu.keyHandler((key&255));
+  Menu.keyHandler((key&255));
 }
 
 
