@@ -10,6 +10,7 @@ class NotifyClass
     unsigned long _lastReconnectAttempt;
     EthernetClient _ethClient;
     PubSubClient _client;
+    unsigned long _lastMotionMessage;
 
     bool reconnect(); 
     static void callback(char* topic, byte* payload, unsigned int length);

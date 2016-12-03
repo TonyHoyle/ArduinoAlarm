@@ -6,7 +6,7 @@
 
 NotifyClass Notify;
 
-#define DEBUG 1
+#define DEBUG 0
 
 static const char server[] = "alarm";
 static const char user[] = "alarm";
@@ -17,6 +17,7 @@ static const char version[] = "1.0.0";
 void NotifyClass::begin()
 {
   _lastReconnectAttempt = 0;
+  _lastMotionMessage = 0;
 
   _client.setClient(_ethClient);
   _client.setServer("candy.hoyle.me.uk", 1883);
@@ -47,6 +48,7 @@ bool NotifyClass::reconnect()
 #endif
     _client.publish("alarm/version", version, true);
     _client.subscribe("alarm/arm");
+    armed(Bell.armed());
   }
   return _client.connected();
 }
@@ -85,10 +87,29 @@ void NotifyClass::armed(bool armed)
 
 void NotifyClass::motion(int sensor, int tamper)
 {
-  if(sensor)
-    _client.publish("alarm/motion", String(sensor).c_str());
+  static char buf[10];
+
+  if (!sensor && !tamper)
+    return;
+
+  if ((millis() - _lastMotionMessage) < 1000)
+    return; // rate limit
+
+  _lastMotionMessage = millis();
+
+#if DEBUG
+  Serial.print("Motion ");
+  Serial.print(sensor);
+  Serial.print(" ");
+  Serial.print(tamper);
+  Serial.print(" ");
+  Serial.println(millis());
+#endif
+
+  if (sensor)
+    _client.publish("alarm/motion", itoa(sensor, buf, 10));
   if (tamper)
-    _client.publish("alarm/tamper", String(tamper).c_str());
+    _client.publish("alarm/tamper", itoa(tamper, buf, 10));
 }
 
 void NotifyClass::triggered()
