@@ -17,11 +17,14 @@ void MelodyClass::begin(int pin)
 
 void MelodyClass::play(const uint16_t *tones, bool loop)
 {
-  /* If a note is playing, let it complete first, which sounds better */
-  if(_nextTone == NULL) _nextInterval = 0; /* Start on next call to loop() - this may not be immediate */
+#if DEBUG
+      Serial.print("Play ");
+      Serial.println(int(tones), HEX);
+#endif
+  _nextInterval = 0; /* Start on next call to loop() - this may not be immediate */
   _nextTone = tones;
   _gap = false;
-  if(loop) _loopPoint = tones;
+  if (loop) _loopPoint = tones;
   else _loopPoint = NULL;
 }
 
@@ -29,24 +32,25 @@ void MelodyClass::stop()
 {
   _loopPoint = NULL;
   _nextTone = NULL;
+  noTone(_pin);
 }
 
 void MelodyClass::maintain()
 {
   unsigned int mil = millis();
-  if(_nextTone == NULL || mil < _nextInterval) return;
+  if (_nextTone == NULL || mil < _nextInterval) return;
 
   /* Special case for startup */
-  if(_nextInterval == 0) _nextInterval = mil;
+  if (_nextInterval == 0) _nextInterval = mil;
 
   uint16_t note = pgm_read_word(_nextTone);
-  uint16_t duration = pgm_read_word(_nextTone+1);
-  if(!_gap)
+  uint16_t duration = pgm_read_word(_nextTone + 1);
+  if (!_gap)
   {
 #if DEBUG
     Serial.println("Note: " + String(note) + "," + String(duration));
 #endif
-    if(note == 0) /* delay */
+    if (note == 0) /* delay */
       noTone(_pin);
     else
       tone(_pin, note);
@@ -55,13 +59,22 @@ void MelodyClass::maintain()
   }
   else
   {
+#if DEBUG
+    Serial.println("Gap: " + String(note) + "," + String(duration));
+#endif
     noTone(_pin);
     _nextInterval = _nextInterval + noteGap;
     _nextTone += 2;
     _gap = false;
 
-    if(duration == 0) /* end */
-      _nextTone = _loopPoint;    
+    if (duration == 0) /* end */
+    {
+#if DEBUG
+      Serial.print("Loop to ");
+      Serial.println(int(_loopPoint), HEX);
+#endif
+      _nextTone = _loopPoint;
+    }
   }
 }
 

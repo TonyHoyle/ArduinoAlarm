@@ -4,6 +4,8 @@
 #include "sensors.h"
 #include "menu.h"
 #include "bell.h"
+#include "melody.h"
+#include "tunelib.h"
 #include "serialmenu.h"
 
 SerialMenuClass SerialMenu;
@@ -25,6 +27,8 @@ void SerialMenuClass::maintain()
       case '2': toggleAlarm(); break;
       case '3': toggleTestMode(); break;
       case '4': toggleArmed(); break;
+      case '5': Melody.play(Tunes.warning_beep, true); break;
+      case '6': Melody.stop(); break;
       case 'p': setPin(line.c_str()+1); break;
     }
     // Sink any remaining characters just in case
@@ -56,6 +60,8 @@ void SerialMenuClass::showMenu()
   Serial.println(Bell.bell()?F("2: Disable alarm"):F("2: Enable alarm"));
   Serial.println(Bell.testMode()?F("3: Disable test mode"):F("3: Enable test mode"));
   Serial.println(Bell.armed()?F("4: Disarm system"):F("4: Arm system"));
+  Serial.println(F("5: Start beep test"));
+  Serial.println(F("6: Stop beep test"));
   Serial.println(F("p<pin> Set pin"));
   Serial.println(F(""));
   if(Bell.testMode())
@@ -99,7 +105,7 @@ void SerialMenuClass::toggleTestMode()
 
 void SerialMenuClass::toggleArmed()
 {
-  Bell.setArmed(!Bell.armed());
+  Bell.arm(!Bell.armed());
 }
 
 void SerialMenuClass::setPin(const char *pin)
