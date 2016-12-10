@@ -48,7 +48,7 @@ bool NotifyClass::reconnect()
 #endif
     _client.publish("alarm/version", version, true);
     _client.subscribe("alarm/arm");
-    armed(Bell.armed());
+    armed(Bell.state()==ARMED);
   }
   return _client.connected();
 }

@@ -28,6 +28,19 @@ void MelodyClass::play(const uint16_t *tones, bool loop)
   else _loopPoint = NULL;
 }
 
+void MelodyClass::beep(uint16_t note, uint16_t duration)
+{
+#if DEBUG
+      Serial.print("Beep ");
+      Serial.print(note);
+      Serial.print(",");
+      Serial.print(duration);
+#endif
+  _nextInterval = millis() + duration; // Interrupt current song
+  _gap = false;
+  tone(_pin, note);
+}
+
 void MelodyClass::stop()
 {
   _loopPoint = NULL;

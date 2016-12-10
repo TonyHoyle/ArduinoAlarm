@@ -16,7 +16,7 @@ void BellClass::begin()
   _strobe = false;
   _testMode = false;
   _armTime = 0;
-  _arming = DAY_MODE;
+  _state = DAY_MODE;
 }
 
 void BellClass::maintain()
@@ -27,7 +27,7 @@ void BellClass::maintain()
   if(sensor || tamper)
     Notify.motion(sensor, tamper);
     
-  if (_arming == ARMED)
+  if (_state == ARMED)
   {
     if (sensor || tamper)
     {
@@ -36,7 +36,7 @@ void BellClass::maintain()
 #if DEBUG
         Serial.println(F("Entry triggered.  30 seconds until alarm."));
 #endif
-        _arming = ENTRY;
+        _state = ENTRY;
         _armTime = millis() + (30 * 1000L);
         Melody.play(Tunes.warning_beep, true);
       }
@@ -44,21 +44,21 @@ void BellClass::maintain()
         trigger(sensor, tamper);
     }
   }
-  else if (_arming == ENTRY)
+  else if (_state == ENTRY)
   {
     if (_armTime <= millis())
       trigger(sensor, tamper);
-  } else if (_arming == WAIT_FOR_EXIT_OPEN)
+  } else if (_state == WAIT_FOR_EXIT_OPEN)
   {
     sensor = Sensors.liveSensor() & EXIT_SENSORS;
     if (sensor)
     {
-      _arming = WAIT_FOR_EXIT_CLOSE;
+      _state = WAIT_FOR_EXIT_CLOSE;
 #if DEBUG
       Serial.println(F("Door open.  Waiting for door close."));
 #endif
     }
-  } else if (_arming == WAIT_FOR_EXIT_CLOSE)
+  } else if (_state == WAIT_FOR_EXIT_CLOSE)
   {
     sensor = Sensors.liveSensor() & EXIT_SENSORS;
     if (!sensor)
@@ -66,19 +66,19 @@ void BellClass::maintain()
 #if DEBUG
       Serial.println(F("Door closed.  Arming system in 10 seconds."));
 #endif
-      _arming = PRE_ARM;
+      _state = PRE_ARM;
       _armTime = millis() + (10 * 1000L);
       Melody.play(Tunes.arming_beep, false);
     }
   }
-  else if (_arming == PRE_ARM)
+  else if (_state == PRE_ARM)
   {
     if (_armTime <= millis())
     {
 #if DEBUG
       Serial.println(F("System armed."));
 #endif
-      _arming = ARMED;
+      _state = ARMED;
       Melody.stop(); /* Just in case */
       Notify.armed(true);
     }
@@ -87,18 +87,18 @@ void BellClass::maintain()
 
 void BellClass::pinEntered()
 {
-  if (_arming != DAY_MODE)
+  if (_state != DAY_MODE)
   {
     setStrobe(false);
     setBell(false);
-    _arming = DAY_MODE;
+    _state = DAY_MODE;
     Melody.stop();
     Notify.armed(false);
   }
   else
   {
     Melody.play(Tunes.warning_beep, true);
-    _arming = WAIT_FOR_EXIT_OPEN;
+    _state = WAIT_FOR_EXIT_OPEN;
   }
 }
 
@@ -122,12 +122,12 @@ void BellClass::arm(bool armed)
   {
     setStrobe(false);
     setBell(false);
-    _arming = DAY_MODE;
+    _state = DAY_MODE;
     Notify.armed(false);
   }
   else
   {
-    _arming = ARMED;
+    _state = ARMED;
     Notify.armed(true);
   }
 }

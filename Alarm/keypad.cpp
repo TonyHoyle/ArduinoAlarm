@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "pins.h"
 #include "menu.h"
+#include "melody.h"
 #include "keypad.h"
 
 #define DEBUG 0
@@ -110,7 +111,7 @@ void KeypadClass::incoming_key()
   Serial1.read();
 #endif
 
-  tone(KEYPAD_BEEP, 1046, 100);
+  Melody.beep(1046, 100);
 
   Menu.keyHandler((key&255));
 }

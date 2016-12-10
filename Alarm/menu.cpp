@@ -9,6 +9,8 @@
 #include "bell.h"
 #include "menu.h"
 
+#define DEBUG 1
+
 #define PINMODE -1
 #define MENUMODE -2
 
@@ -35,7 +37,7 @@ void MenuClass::begin()
 
 void MenuClass::keyHandler(char key)
 {
-  if(Bell.armed()) _currentMenu = PINMODE;
+  if(Bell.state()!=DAY_MODE) _currentMenu = PINMODE;
   
   if (_currentMenu == PINMODE) pinKey(key);
   else if (_currentMenu == MENUMODE) menuKey(key);
@@ -62,7 +64,11 @@ void MenuClass::pinKey(char key)
     return;
   }
 
-  if (key < '0' || key > '9') return;
+  if (key < '0' || key > '9') 
+  {
+    _keyCount = 0;
+    return;
+  }
 
   _enteredPin[_keyCount++] = (char)key;
   if (_keyCount == _data.pinLength)
@@ -70,9 +76,20 @@ void MenuClass::pinKey(char key)
     _keyCount = 0;
     if (!memcmp(_data.pin, _enteredPin, _data.pinLength))
     {
+#if DEBUG
+      Serial.println("Correct pin entered!");
+#endif
       Bell.pinEntered();
       updateMessage();
     }
+#if DEBUG
+    else
+    {
+      Serial.print("Incorrect pin entered: ");
+      _enteredPin[_keyCount]=0;
+      Serial.println(_enteredPin);
+    }
+#endif
   }
 }
 
@@ -99,7 +116,7 @@ void MenuClass::menuKey(char key)
 void MenuClass::updateMessage()
 {
   Keypad.clear();
-  if(Bell.armed())
+  if(Bell.state() == ARMED)
     Keypad.message("Alarm Set");
   else if (_currentMenu == PINMODE)
     Keypad.message(getTime());

@@ -13,6 +13,9 @@ class SerialMenuClass
     void toggleArmed();
     void setPin(const char *pin);
 
+    void test5();
+    void test6();
+
   public:
     void begin();
     void maintain();

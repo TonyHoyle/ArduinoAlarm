@@ -27,8 +27,8 @@ void SerialMenuClass::maintain()
       case '2': toggleAlarm(); break;
       case '3': toggleTestMode(); break;
       case '4': toggleArmed(); break;
-      case '5': Melody.play(Tunes.warning_beep, true); break;
-      case '6': Melody.stop(); break;
+      case '5': test5(); break;
+      case '6': test6(); break;
       case 'p': setPin(line.c_str()+1); break;
     }
     // Sink any remaining characters just in case
@@ -59,14 +59,14 @@ void SerialMenuClass::showMenu()
   Serial.println(Bell.strobe()?F("1: Disable strobe"):F("1: Enable strobe"));
   Serial.println(Bell.bell()?F("2: Disable alarm"):F("2: Enable alarm"));
   Serial.println(Bell.testMode()?F("3: Disable test mode"):F("3: Enable test mode"));
-  Serial.println(Bell.armed()?F("4: Disarm system"):F("4: Arm system"));
-  Serial.println(F("5: Start beep test"));
-  Serial.println(F("6: Stop beep test"));
+  Serial.println(Bell.state()==ARMED?F("4: Disarm system"):F("4: Arm system"));
+  Serial.println(F("5: Start entry test"));
+  Serial.println(F("6: Test"));
   Serial.println(F("p<pin> Set pin"));
   Serial.println(F(""));
   if(Bell.testMode())
     Serial.println(F("*** TEST MODE ENABLED ***"));
-  if(Bell.armed())
+  if(Bell.state()==ARMED)
     Serial.println(F("*** SYSTEM IS ARMED ***"));
   Serial.print(F("Menu: "));
 }
@@ -105,7 +105,7 @@ void SerialMenuClass::toggleTestMode()
 
 void SerialMenuClass::toggleArmed()
 {
-  Bell.arm(!Bell.armed());
+  Bell.arm(Bell.state()!=ARMED);
 }
 
 void SerialMenuClass::setPin(const char *pin)
@@ -116,5 +116,15 @@ void SerialMenuClass::setPin(const char *pin)
     Serial.print(F("Pin reset to "));
     Serial.println(pin); 
   }
+}
+
+void SerialMenuClass::test5()
+{
+  Bell.setState(ENTRY, millis() + (30 * 1000L));
+  Melody.play(Tunes.arming_beep, false);
+}
+
+void SerialMenuClass::test6()
+{
 }
 

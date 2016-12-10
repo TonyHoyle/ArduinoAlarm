@@ -15,6 +15,7 @@ class MelodyClass
     void maintain();
 
     void play(const uint16_t *notes, bool loop);
+    void beep(uint16_t note, uint16_t duration);
     void stop();
 };
 
