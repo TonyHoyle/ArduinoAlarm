@@ -9,7 +9,7 @@
 #include "bell.h"
 #include "menu.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define PINMODE -1
 #define MENUMODE -2
@@ -67,6 +67,7 @@ void MenuClass::pinKey(char key)
   if (key < '0' || key > '9') 
   {
     _keyCount = 0;
+    updateMessage();
     return;
   }
 
@@ -88,9 +89,12 @@ void MenuClass::pinKey(char key)
       Serial.print("Incorrect pin entered: ");
       _enteredPin[_keyCount]=0;
       Serial.println(_enteredPin);
+      updateMessage();
     }
 #endif
   }
+  else
+    updateMessage(); 
 }
 
 void MenuClass::menuKey(char key)
@@ -119,7 +123,15 @@ void MenuClass::updateMessage()
   if(Bell.state() == ARMED)
     Keypad.message("Alarm Set");
   else if (_currentMenu == PINMODE)
-    Keypad.message(getTime());
+  {
+    if(_keyCount == 0)
+      Keypad.message(getTime());
+    else
+    {
+      for(int i=0; i<_keyCount; i++)
+        Keypad.message("*");     
+    }
+  }
   else if (_currentMenu == MENUMODE)
     Keypad.message("Menu Mode");
   else

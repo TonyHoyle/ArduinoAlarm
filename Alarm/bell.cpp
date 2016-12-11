@@ -14,7 +14,7 @@ void BellClass::begin()
 {
   _bell = false;
   _strobe = false;
-  _testMode = false;
+  _testMode = true;
   _armTime = 0;
   _state = DAY_MODE;
 }
@@ -112,7 +112,7 @@ void BellClass::trigger(int sensor, int tamper)
   Serial.println(F(" **"));
 #endif
   setStrobe(true);
-  //      setAlarm(true);
+  setBell(true);
   Notify.triggered();
 }
 

@@ -34,10 +34,10 @@ void MelodyClass::beep(uint16_t note, uint16_t duration)
       Serial.print("Beep ");
       Serial.print(note);
       Serial.print(",");
-      Serial.print(duration);
+      Serial.println(duration);
 #endif
   _nextInterval = millis() + duration; // Interrupt current song
-  _gap = false;
+  _gap = true;
   tone(_pin, note);
 }
 
@@ -51,7 +51,13 @@ void MelodyClass::stop()
 void MelodyClass::maintain()
 {
   unsigned int mil = millis();
-  if (_nextTone == NULL || mil < _nextInterval) return;
+  
+  if (mil < _nextInterval) return;
+  if (_nextTone == NULL) 
+  {
+    noTone(_pin);
+    return;
+  }
 
   /* Special case for startup */
   if (_nextInterval == 0) _nextInterval = mil;

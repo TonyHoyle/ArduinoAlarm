@@ -61,7 +61,7 @@ void SerialMenuClass::showMenu()
   Serial.println(Bell.testMode()?F("3: Disable test mode"):F("3: Enable test mode"));
   Serial.println(Bell.state()==ARMED?F("4: Disarm system"):F("4: Arm system"));
   Serial.println(F("5: Start entry test"));
-  Serial.println(F("6: Test"));
+  Serial.println(F("6: Stop Test"));
   Serial.println(F("p<pin> Set pin"));
   Serial.println(F(""));
   if(Bell.testMode())
@@ -121,10 +121,12 @@ void SerialMenuClass::setPin(const char *pin)
 void SerialMenuClass::test5()
 {
   Bell.setState(ENTRY, millis() + (30 * 1000L));
-  Melody.play(Tunes.arming_beep, false);
+  Melody.play(Tunes.warning_beep, true);
 }
 
 void SerialMenuClass::test6()
 {
+  Bell.setState(DAY_MODE, 0);
+  Melody.stop();
 }
 
