@@ -3,7 +3,7 @@
 
 MelodyClass Melody;
 
-#define DEBUG 0
+#define DEBUG 1
 
 static const int noteGap = 50;
 
@@ -43,6 +43,9 @@ void MelodyClass::beep(uint16_t note, uint16_t duration)
 
 void MelodyClass::stop()
 {
+#if DEBUG
+      Serial.print("Stop note");
+#endif
   _loopPoint = NULL;
   _nextTone = NULL;
   noTone(_pin);
@@ -53,8 +56,15 @@ void MelodyClass::maintain()
   unsigned int mil = millis();
   
   if (mil < _nextInterval) return;
+#if DEBUG
+  Serial.println("Interval hit");
+#endif
   if (_nextTone == NULL) 
   {
+    _nextInterval = mil + 1000000000L;
+#if DEBUG
+      Serial.println("No more notes, stop play ");
+#endif
     noTone(_pin);
     return;
   }
