@@ -1,0 +1,8 @@
+tcp4000.name=TCP 4000
+tcp4000.communication=serial
+tcp4000.protocol=wiring
+tcp4000.program.protocol=wiring
+tcp4000.program.tool=avrdude
+tcp4000.program.extra_params=-D -Pnet:alarm:4000
+
+
