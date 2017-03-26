@@ -149,8 +149,33 @@ void NtpDriver::receiveNtpPacket()
     Serial.print('0');
   }
   Serial.println(epoch % 60); // print the second
+
+  Serial.print('DST offset is');
+  Serial.println(dstOffset(epoch));
 #endif
 
-  setTime(epoch);
+  setTime(epoch + dstOffset(epoch));
+}
+
+int NtpDriver::dstOffset (unsigned long unixTime)
+{
+  //Receives unix epoch time and returns seconds of offset for local DST
+  //Valid thru 2099 for US only, Calculations from "http://www.webexhibits.org/daylightsaving/i.html"
+  //Code idea from jm_wsb @ "http://forum.arduino.cc/index.php/topic,40286.0.html"
+  //Get epoch times @ "http://www.epochconverter.com/" for testing
+  //DST update wont be reflected until the next time sync
+  time_t t = unixTime;
+  int beginDSTDay = (31 - (5* year(t) /4 + 4) % 7);  
+  int beginDSTMonth=3;
+  int endDSTDay = (31 - (5 * year(t) /4 + 1) % 7);
+  int endDSTMonth=10;
+  if (((month(t) > beginDSTMonth) && (month(t) < endDSTMonth))
+    || ((month(t) == beginDSTMonth) && (day(t) > beginDSTDay))
+    || ((month(t) == beginDSTMonth) && (day(t) == beginDSTDay) && (hour(t) >= 2))
+    || ((month(t) == endDSTMonth) && (day(t) < endDSTDay))
+    || ((month(t) == endDSTMonth) && (day(t) == endDSTDay) && (hour(t) < 1)))
+    return (3600);  //Add back in one hours worth of seconds - DST in effect
+  else
+    return (0);  //NonDST
 }
 

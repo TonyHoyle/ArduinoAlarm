@@ -11,6 +11,7 @@ class NtpDriver
 
     void sendNtpPacket(IPAddress address); 
     void receiveNtpPacket();
+    int dstOffset (unsigned long unixTime);
 
   public:
     NtpDriver();
